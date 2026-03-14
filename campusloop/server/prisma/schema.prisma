@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum SleepSchedule {
+  EARLY_BIRD
+  FLEXIBLE
+  NIGHT_OWL
+}
+
+enum CleanlinessLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum StudyHabit {
+  QUIET
+  MODERATE
+  COLLABORATIVE
+}
+
+enum MessageFlagReason {
+  HARASSMENT
+  SPAM
+  INAPPROPRIATE
+  OTHER
+}
+
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  role              Role        @default(STUDENT)
+  isVerified        Boolean     @default(false)
+  verificationCode  String?
+  verificationExpiry DateTime?
+  isSuspended       Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  profile           Profile?
+  sentMessages      Message[]   @relation("SentMessages")
+  receivedMessages  Message[]   @relation("ReceivedMessages")
+  reportsSubmitted  Report[]    @relation("Reporter")
+  reportsAgainst    Report[]    @relation("ReportedUser")
+}
+
+model Profile {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  bio                String?
+  budgetMin          Int
+  budgetMax          Int
+  lifestyle          String?
+  cleanliness        CleanlinessLevel
+  sleepSchedule      SleepSchedule
+  studyHabits        StudyHabit
+  smokingAllowed     Boolean           @default(false)
+  guestsOkay         Boolean           @default(false)
+  petsOkay           Boolean           @default(false)
+  leaseDurationMonths Int
+  locationPreference String?
+  genderPreference   String?
+  roommateCount      Int               @default(1)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  reports     Report[]
+}
+
+model Report {
+  id              String            @id @default(cuid())
+  reporterId      String
+  reportedUserId  String?
+  messageId       String?
+  reason          MessageFlagReason
+  note            String?
+  resolved        Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+
+  reporter        User              @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser    User?             @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  message         Message?          @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
