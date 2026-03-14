@@ -45,22 +45,19 @@ Install dependencies:
 npm install
 ```
 
-Create a `.env` file inside the `server` folder.
+Generate Prisma client:
 
-Example `.env` file:
-
-```
-DATABASE_URL="your_database_connection_string"
-JWT_SECRET="your_secret_key"
+```bash
+npx prisma generate
 ```
 
-Run Prisma migrations to create database tables:
+Run Prisma migrations:
 
 ```bash
 npx prisma migrate dev
 ```
 
-(Optional) Seed the database with initial data:
+(Optional) Seed the database:
 
 ```bash
 npx prisma db seed
